@@ -273,18 +273,25 @@ export class AssetAnalyzer {
             const srcMatch = attrs.match(/src=["']([^"']+)["']/i);
             if (srcMatch) {
                 const src = srcMatch[1];
-                // Remote scripts: Leave as is (Devvit/CSP will handle blocking)
-                if (src.match(/^(https?:|\/\/)/i)) return match;
                 
-                // Local scripts: Ensure type="module" so Vite bundles them
-                if (!attrs.includes('type="module"')) {
-                    let newTag = match;
-                    if (attrs.includes('type=')) {
-                         newTag = newTag.replace(/type=["'](text\/javascript|application\/javascript)["']/i, 'type="module"');
-                    } else {
-                         newTag = newTag.replace(/<script/i, '<script type="module"');
+                // Remote scripts: Remove for CSP compliance
+                if (src.match(/^(https?:|\/\/)/i)) {
+                    // Try to be helpful: if it's tailwind, mention it specifically
+                    if (src.includes('tailwindcss')) {
+                         return `<!-- [WebSim Converter] External Tailwind Script Removed (CSP Violation). Styling might be affected. -->`;
                     }
-                    return newTag;
+                    return `<!-- [WebSim Converter] External Script Removed: ${src} (Devvit CSP strictly forbids external scripts) -->`;
+                }
+                
+                // Local scripts: Ensure type="module" is present for Vite
+                // We completely reconstruct the tag to ensure the attribute is added correctly
+                if (!attrs.match(/type=["']module["']/i)) {
+                    let newAttrs = attrs;
+                    // Remove existing type if present (to replace it)
+                    newAttrs = newAttrs.replace(/\s*type=["'][^"']*["']/i, '');
+                    // Add type="module"
+                    newAttrs = `${newAttrs} type="module"`;
+                    return `<script${newAttrs}>${content}</script>`;
                 }
                 return match; 
             }

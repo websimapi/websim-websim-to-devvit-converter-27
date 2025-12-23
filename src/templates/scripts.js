@@ -214,8 +214,11 @@ try {
     // Verify Config
     if (fs.existsSync('devvit.json')) {
         const config = fs.readFileSync('devvit.json', 'utf8');
-        if (!config.includes('"entry": "dist/server/index.cjs"')) {
-             console.warn('⚠️  devvit.json might have incorrect server entry path (expected "dist/server/index.cjs").');
+        // We expect "entry": "index.cjs" (which resolves relative to dist/server in some envs) 
+        // OR "entry": "dist/server/index.cjs" depending on CLI version. 
+        // We just warn if it looks completely wrong (like src/server/index.ts)
+        if (config.includes('"entry": "src/server')) {
+             console.warn('⚠️  devvit.json seems to point to source file. It should point to the built "index.cjs".');
         }
     } else {
         console.warn('⚠️  devvit.json not found');
