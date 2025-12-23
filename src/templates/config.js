@@ -145,7 +145,17 @@ export default defineConfig({
     // Remotion specific flags if needed
     "process.env.REMOTION_ENV": JSON.stringify("production"),
   },
+  esbuild: {
+    loader: "jsx",
+    include: /.*\\.(js|jsx|ts|tsx)$/,
+    exclude: [],
+  },
   optimizeDeps: {
+    esbuildOptions: {
+      loader: {
+        '.js': 'jsx',
+      },
+    },
     include: [${hasReact ? "'react', 'react-dom', 'react/jsx-runtime'" : ""}, ${hasRemotion ? "'remotion', '@remotion/player'" : ""}]
   }
 });
